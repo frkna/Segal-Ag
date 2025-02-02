@@ -2,7 +2,7 @@ import os
 
 class Config:
     # Veritabanı yapılandırması
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Flask-SocketIO yapılandırması
