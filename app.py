@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify, send_from_directory
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from database import db, User, Room, Message, UserRole, list_room_members
+from database import db, User, Room, Message, UserRole
 from config import Config
 import os
 from werkzeug.utils import secure_filename
@@ -70,14 +70,6 @@ def logout(user_id):
     logout_user()
     return redirect(url_for('login'))
 
-#Oda kullanıcıları
-@app.route('/room/<int:room_id>')
-@login_required
-def room(room_id):
-    room = Room.query.get(room_id)
-    room_users = list_room_members(room_id)
-    return render_template('room.html', room=room, users=room_users)
-
 # Oda yönetimi (sadece admin)
 @app.route('/rooms', methods=['GET', 'POST'])
 @login_required
@@ -135,11 +127,15 @@ def manage_users():
             flash('Kullanıcı başarıyla oluşturuldu', 'success')
             return redirect(url_for('manage_users'))
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        if str({e}) == "{IntegrityError('(sqlite3.IntegrityError) UNIQUE constraint failed: users.username')}":
+            flash('Bu kullanıcı adı zaten kullanımda', 'error')
+            return redirect(url_for('manage_users'))
+
+        return jsonify({'error': str({e})}, 500)
 
     
     users = User.query.all()
-    return render_template('manage_users.html', users=users, roles=[UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT])
+    return render_template('manage_users.html', users=users, roles=[UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT], user=current_user)
 
 # Kullanıcı güncelleme
 @app.route('/users/<int:user_id>/edit', methods=['POST'])
